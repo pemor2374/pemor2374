@@ -1,0 +1,42 @@
+name: Deploy to Azure MySQL
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar cliente MySQL
+        run: sudo apt-get update && sudo apt-get install -y mysql-client
+
+      - name: Verificar ligação (opcional)
+        env:
+          AZURE_MYSQL_HOST: ${{ secrets.AZURE_MYSQL_HOST }}
+          AZURE_MYSQL_USER: ${{ secrets.AZURE_MYSQL_USER }}
+          AZURE_MYSQL_PASSWORD: ${{ secrets.AZURE_MYSQL_PASSWORD }}
+        run: |
+          mysqladmin ping -h "$AZURE_MYSQL_HOST" -u "$AZURE_MYSQL_USER" -p"$AZURE_MYSQL_PASSWORD" || exit 1
+
+      - name: Executar script SQL de inicialização
+        env:
+          AZURE_MYSQL_HOST: ${{ secrets.AZURE_MYSQL_HOST }}
+          AZURE_MYSQL_USER: ${{ secrets.AZURE_MYSQL_USER }}
+          AZURE_MYSQL_PASSWORD: ${{ secrets.AZURE_MYSQL_PASSWORD }}
+          AZURE_MYSQL_DATABASE: ${{ secrets.AZURE_MYSQL_DATABASE }}
+        run: |
+          if [ -f scripts/init.sql ]; then
+            mysql -h "$AZURE_MYSQL_HOST" \
+                  -u "$AZURE_MYSQL_USER" \
+                  -p"$AZURE_MYSQL_PASSWORD" \
+                  -D "$AZURE_MYSQL_DATABASE" < scripts/init.sql
+          else
+            echo "scripts/init.sql não encontrado" && exit 1
+          fi
