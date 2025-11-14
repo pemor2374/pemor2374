@@ -40,3 +40,10 @@ jobs:
           else
             echo "scripts/init.sql não encontrado" && exit 1
           fi
+
+          
+mysql -h "$AZURE_MYSQL_HOST" \
+      -u "$AZURE_MYSQL_USER" \
+      -p"$AZURE_MYSQL_PASSWORD" \
+      --ssl-mode=REQUIRED \
+      -D "$AZURE_MYSQL_DATABASE" < scripts/init.sql
